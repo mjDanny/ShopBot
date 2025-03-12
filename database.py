@@ -1,35 +1,48 @@
 import aiosqlite
 
-async def create_tables():
+
+async def init_db():
     async with aiosqlite.connect("services.db") as db:
         await db.execute("""
             CREATE TABLE IF NOT EXISTS services (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL,
-                description TEXT,
-                price REAL,
-                examples TEXT
+                name TEXT NOT NULL UNIQUE,
+                description TEXT NOT NULL,
+                price REAL NOT NULL,
+                examples TEXT NOT NULL
             )
         """)
         await db.commit()
 
-async def add_services():
+
+async def populate_services():
+    services = [
+        ('Таргетированная реклама', 'Продвижение в социальных сетях', 5000, 'https://example.com/1'),
+        ('Разработка баннеров', 'Создание креативных баннеров', 3000, 'https://example.com/2'),
+        ('Контекстная реклама', 'Реклама в поисковых системах', 7000, 'https://example.com/3')
+    ]
+
     async with aiosqlite.connect("services.db") as db:
-        await db.execute("""
-            INSERT INTO services (name, description, price, examples)
-            VALUES 
-                ('Таргетированная реклама', 'Продвижение в социальных сетях', 5000, 'https://example.com'),
-                ('Разработка баннеров', 'Создание креативных баннеров', 3000, 'https://example.com'),
-                ('Контекстная реклама', 'Реклама в поисковых системах', 7000, 'https://example.com')
-        """)
+        await db.executemany(
+            "INSERT OR IGNORE INTO services (name, description, price, examples) VALUES (?, ?, ?, ?)",
+            services
+        )
         await db.commit()
+
 
 async def get_services():
     async with aiosqlite.connect("services.db") as db:
-        cursor = await db.execute("SELECT name, description, price, examples FROM services")
-        return await cursor.fetchall()
+        async with db.execute("SELECT name, description, price, examples FROM services") as cursor:
+            return await cursor.fetchall()
+
 
 if __name__ == "__main__":
     import asyncio
-    asyncio.run(create_tables())
-    asyncio.run(add_services())
+
+
+    async def main():
+        await init_db()
+        await populate_services()
+
+
+    asyncio.run(main())

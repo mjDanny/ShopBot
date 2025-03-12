@@ -1,10 +1,10 @@
-from .start import register_handlers as register_start_handlers
-from .services import register_handlers as register_services_handlers
-from .order import register_handlers as register_order_handlers
-from .contacts import register_handlers as register_contacts_handlers
+from .start import router as start_router
+from .services import router as services_router
+from .order import router as order_router
+from .contacts import router as contacts_router
 
 def register_all_handlers(dp):
-    register_start_handlers(dp)
-    register_services_handlers(dp)
-    register_order_handlers(dp)
-    register_contacts_handlers(dp)
+    dp.include_router(start_router)
+    dp.include_router(services_router)
+    dp.include_router(order_router)
+    dp.include_router(contacts_router)
