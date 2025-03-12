@@ -3,13 +3,20 @@ from aiogram import F
 from database import get_services
 from keyboards.services import services_keyboard
 
+import logging
+
 router = Router()
+logger = logging.getLogger(__name__)
+
 
 @router.message(F.Text("📋 Услуги"))
 async def show_services(message: types.Message):
     try:
+        logger.info(f"Пользователь {message.from_user.id} запросил услуги")
         services = await get_services()
+
         if not services:
+            logger.warning("Нет доступных услуг в базе данных")
             await message.answer("😞 В данный момент услуги недоступны")
             return
 
@@ -25,5 +32,8 @@ async def show_services(message: types.Message):
                 text=response,
                 reply_markup=services_keyboard(name)
             )
+            logger.debug(f"Отправлена услуга: {name}")
+
     except Exception as e:
-        await message.answer("⚠️ Не удалось загрузить информацию об услугах")
+        logger.error(f"Ошибка показа услуг: {str(e)}", exc_info=True)
+        await message.answer("⚠️ Произошла ошибка при загрузке услуг")
