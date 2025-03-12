@@ -1,11 +1,11 @@
 from aiogram import Router, types
-from aiogram.filters import Text
+from aiogram import F
 from database import get_services
 from keyboards.services import services_keyboard
 
 router = Router()
 
-@router.message(Text("📋 Услуги"))
+@router.message(F.Text("📋 Услуги"))
 async def show_services(message: types.Message):
     try:
         services = await get_services()

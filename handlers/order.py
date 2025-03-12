@@ -4,6 +4,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery
 import os
+from aiogram import F
 
 router = Router()
 
@@ -14,7 +15,7 @@ class OrderStates(StatesGroup):
     waiting_for_comment = State()
 
 
-@router.callback_query(Text(startswith="order_"))
+@router.callback_query(F.Text(startswith="order_"))
 async def start_order(callback: CallbackQuery, state: FSMContext):
     try:
         service_name = callback.data.split("_", 1)[1]

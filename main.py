@@ -20,5 +20,5 @@ register_all_handlers(dp)
 # Запуск бота
 if __name__ == "__main__":
     import asyncio
-    from aiogram import executor
+    from aiogram import Dispatcher
     asyncio.run(dp.start_polling(bot))
