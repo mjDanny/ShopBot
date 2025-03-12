@@ -9,8 +9,9 @@ router = Router()
 logger = logging.getLogger(__name__)
 
 
-@router.message(F.Text("📋 Услуги"))
+@router.message(F.text == "📋 Услуги")
 async def show_services(message: types.Message):
+    logger.info("Обработчик услуг вызван!")
     try:
         logger.info(f"Пользователь {message.from_user.id} запросил услуги")
         services = await get_services()
