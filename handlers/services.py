@@ -1,7 +1,7 @@
 from aiogram import Router, types, F
 from aiogram.enums import ParseMode
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from database import get_services
+from database import Database
 import logging
 
 router = Router()
@@ -10,7 +10,8 @@ logger = logging.getLogger(__name__)
 
 # Клавиатура со списком услуг
 async def services_menu_kb():
-    services = await get_services()
+    async with Database() as db:  # Используем новый класс Database
+        services = await db.get_services()
     builder = InlineKeyboardBuilder()
 
     for service in services:
@@ -44,7 +45,8 @@ async def show_services(message: types.Message):
 @router.callback_query(F.data.startswith("service_"))
 async def show_service_details(callback: types.CallbackQuery):
     service_name = callback.data.split("_", 1)[1]
-    services = await get_services()
+    async with Database() as db:  # Используем новый класс Database
+        services = await db.get_services()
 
     for service in services:
         if service[0] == service_name:
