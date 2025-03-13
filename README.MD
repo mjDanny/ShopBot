@@ -104,5 +104,3 @@ python main.py
 **Автор**: mjDanny 
 
 **Поддержка**: @mjDanny
-
-```
