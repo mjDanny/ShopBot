@@ -1,4 +1,3 @@
-# ----------- handlers/contacts.py -----------
 from aiogram import Router, F, types
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
@@ -43,7 +42,7 @@ async def process_contact(message: types.Message, state: FSMContext):
         # Отправка сообщения
         await message.bot.send_message(
             chat_id=manager_chat_id,
-            text=f"📩 Новый контакт от @{message.from_user.username}:\n{message.text}"
+            text=f"📩 Новый контакт от @{message.from_user.username}:\n{message.text}",
         )
         logger.info(f"Message sent to {manager_chat_id} successfully")
 

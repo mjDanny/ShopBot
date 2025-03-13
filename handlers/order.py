@@ -1,28 +1,30 @@
-from aiogram import Router, types
+from aiogram import Router, types, F
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.types import CallbackQuery
-from aiogram import F
 import os
 import logging
-import re
+import re  # Для валидации номера телефона
 
 router = Router()
 logger = logging.getLogger(__name__)
 
+# Регулярное выражение для проверки формата телефона
+PHONE_REGEX = re.compile(r"^\+\d{7,15}$")  # Пример: +79123456789
+
 
 class OrderStates(StatesGroup):
-    waiting_for_name = State()
-    waiting_for_phone = State()
-    waiting_for_comment = State()
+    """Класс состояний процесса оформления заказа"""
 
-
-PHONE_REGEX = re.compile(r"^\+\d{7,15}$")  # Регулярка для проверки телефона
+    waiting_for_name = State()  # Ожидание ввода ФИО
+    waiting_for_phone = State()  # Ожидание ввода телефона
+    waiting_for_comment = State()  # Ожидание комментария
 
 
 @router.callback_query(F.data.startswith("order_"))
-async def start_order(callback: CallbackQuery, state: FSMContext):
+async def start_order(callback: types.CallbackQuery, state: FSMContext):
+    """Начало оформления заказа при нажатии на кнопку"""
     try:
+        # Извлечение названия услуги из callback_data
         service_name = callback.data.split("_", 1)[1]
         await state.update_data(service_name=service_name)
         await callback.message.answer("✏️ Введите ваше ФИО:")
@@ -35,19 +37,25 @@ async def start_order(callback: CallbackQuery, state: FSMContext):
 
 @router.message(OrderStates.waiting_for_name)
 async def process_name(message: types.Message, state: FSMContext):
-    if len(message.text.strip()) < 5:
+    """Обработка ввода ФИО"""
+    name = message.text.strip()
+
+    # Валидация длины ФИО
+    if len(name) < 5:
         await message.answer("❌ ФИО должно содержать минимум 5 символов")
         return
 
-    await state.update_data(name=message.text.strip())
+    await state.update_data(name=name)
     await message.answer("📱 Введите ваш контактный номер в формате +7XXX...:")
     await state.set_state(OrderStates.waiting_for_phone)
 
 
 @router.message(OrderStates.waiting_for_phone)
 async def process_phone(message: types.Message, state: FSMContext):
+    """Обработка ввода номера телефона"""
     phone = message.text.strip()
 
+    # Проверка формата номера через регулярное выражение
     if not PHONE_REGEX.match(phone):
         await message.answer("❌ Неверный формат номера. Пример: +79123456789")
         return
@@ -59,10 +67,12 @@ async def process_phone(message: types.Message, state: FSMContext):
 
 @router.message(OrderStates.waiting_for_comment)
 async def process_comment(message: types.Message, state: FSMContext):
+    """Финальный этап оформления заказа"""
     try:
         user_data = await state.get_data()
         comment = message.text.strip()
 
+        # Формирование текста заявки
         text = (
             "✅ Новая заявка!\n\n"
             f"📌 Услуга: {user_data['service_name']}\n"
@@ -71,18 +81,18 @@ async def process_comment(message: types.Message, state: FSMContext):
             f"💬 Комментарий: {comment}"
         )
 
+        # Получение ID чата менеджера из переменных окружения
         manager_chat_id = os.getenv("MANAGER_CHAT_ID")
         if not manager_chat_id:
             raise ValueError("MANAGER_CHAT_ID не установлен")
 
-        await message.bot.send_message(
-            chat_id=int(manager_chat_id),
-            text=text
-        )
+        # Отправка заявки менеджеру
+        await message.bot.send_message(chat_id=int(manager_chat_id), text=text)
         await message.answer("🎉 Ваша заявка успешно отправлена!")
 
     except Exception as e:
         logger.error(f"Ошибка отправки заявки: {str(e)}", exc_info=True)
         await message.answer("⚠️ Произошла ошибка при отправке заявки")
     finally:
+        # Сброс состояния независимо от результата
         await state.clear()
