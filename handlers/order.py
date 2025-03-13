@@ -9,7 +9,7 @@ router = Router()
 logger = logging.getLogger(__name__)
 
 # Регулярное выражение для проверки формата телефона
-PHONE_REGEX = re.compile(r"^\+\d{7,15}$")  # Пример: +79123456789
+PHONE_REGEX = re.compile(r"^(\+7|8)\d{10}$")
 
 
 class OrderStates(StatesGroup):
@@ -46,7 +46,7 @@ async def process_name(message: types.Message, state: FSMContext):
         return
 
     await state.update_data(name=name)
-    await message.answer("📱 Введите ваш контактный номер в формате +7XXX...:")
+    await message.answer("📱 Введите ваш контактный номер:")
     await state.set_state(OrderStates.waiting_for_phone)
 
 
